@@ -21,15 +21,14 @@ class MainAppDetailBar extends ConsumerWidget implements PreferredSizeWidget {
         title: Text(
           title != null ? title! : '',
           style: TextStyle(
-              color: currentTheme == ThemeMode.dark
-                  ? Colors.white
-                  : Colors.black,
+              color:
+                  currentTheme == ThemeMode.dark ? Colors.white : Colors.black,
               fontSize: 14,
               fontWeight: FontWeight.w900),
         ),
         centerTitle: true,
         backgroundColor:
-            Colors.black, // Black with 50% opacity
+            currentTheme == ThemeMode.dark ? Colors.black : Colors.white,
         elevation: 10,
         actions: [
           IconButton(
