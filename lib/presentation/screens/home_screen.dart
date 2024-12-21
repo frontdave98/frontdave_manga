@@ -70,7 +70,7 @@ class MangaCard extends ConsumerWidget {
                     Text(
                       item.description,
                       overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
+                      maxLines: 3,
                       style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
