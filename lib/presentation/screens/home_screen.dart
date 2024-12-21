@@ -103,7 +103,7 @@ class HomeScreen extends ConsumerWidget {
           data: (mangas) => GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.55,
+              childAspectRatio: 0.5,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
