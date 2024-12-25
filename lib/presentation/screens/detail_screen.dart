@@ -14,9 +14,14 @@ class HeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: 550,
       width: double.infinity,
+      clipBehavior: Clip.hardEdge,
+      decoration: const BoxDecoration(
+          borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16))),
       child: Hero(
         tag: featured_image,
         child: CachedNetworkImage(
@@ -58,28 +63,40 @@ class DetailScreen extends ConsumerWidget {
                   ),
                 ],
                 tabViews: [
-                  SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        HeroImage(
-                          featured_image: detail.featured_image,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(detail.title,
-                                  style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 10),
-                              Text(detail.description,
-                                  style: const TextStyle(fontSize: 14)),
-                            ],
+                  RefreshIndicator(
+                    triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                    onRefresh: () async {
+                      // Step 3: Refetch data
+                      return ref.refresh(mangaDetailProvider(slug!));
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
+                          HeroImage(
+                            featured_image: detail.featured_image,
                           ),
-                        ),
-                      ],
+                          const SizedBox(
+                            height: 8,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(detail.title,
+                                    style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 3)),
+                                const SizedBox(height: 10),
+                                Text(detail.description,
+                                    style: const TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   Padding(
@@ -95,16 +112,13 @@ class DetailScreen extends ConsumerWidget {
                         return InkWell(
                             onTap: () {
                               String fullUrl = detail.url;
-                              
+
                               // Parse the URL
                               Uri uri = Uri.parse(fullUrl);
-                              
+
                               // Extract the origin
-                              String origin =
-                                  "${uri.scheme}://${uri.host}";
-                              ref
-                                      .read(navigationProvider.notifier)
-                                      .state =
+                              String origin = "${uri.scheme}://${uri.host}";
+                              ref.read(navigationProvider.notifier).state =
                                   ch.link.contains('http')
                                       ? ch.link
                                       : "$origin${ch.link}";
@@ -112,8 +126,8 @@ class DetailScreen extends ConsumerWidget {
                             },
                             child: Container(
                               decoration: const BoxDecoration(
-                                  border: Border(
-                                      bottom: BorderSide(width: 0.3))),
+                                  border:
+                                      Border(bottom: BorderSide(width: 0.3))),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 16),
                               child: Row(
@@ -129,7 +143,7 @@ class DetailScreen extends ConsumerWidget {
                             ));
                       }).toList())),
                     ),
-                  ),                    
+                  ),
                 ],
                 tabBarColor: currentTheme == ThemeMode.light
                     ? Colors.white

@@ -29,7 +29,7 @@ class MainAppDetailBar extends ConsumerWidget implements PreferredSizeWidget {
         centerTitle: true,
         backgroundColor:
             currentTheme == ThemeMode.dark ? Colors.black : Colors.white,
-        elevation: 10,
+        elevation: 0,
         actions: [
           IconButton(
             onPressed: () {

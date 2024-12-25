@@ -21,6 +21,7 @@ class MainAppBar extends ConsumerWidget implements PreferredSizeWidget {
           height: 120,
           child: AppBar(
             centerTitle: true,
+            scrolledUnderElevation: 0,
             title: Image.asset(
               'lib/assets/app_icon.png',
               height: 25,

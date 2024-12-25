@@ -69,6 +69,10 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
       ? mangaDetail.asData?.value.chapters[currentChapterIndex - 1]
       : null;
 
+  print("currentChapterIndex $currentChapterIndex");
+  print("prevChapter $prevChapter");
+  print("nextChapter $nextChapter");
+
   return AnimatedContainer(
     color: currentTheme == ThemeMode.dark ? Colors.black : Colors.white,
     duration: const Duration(milliseconds: 300),
@@ -81,7 +85,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
           decoration: BoxDecoration(
             color: currentTheme == ThemeMode.dark
                 ? Colors.redAccent
-                : Colors.blueGrey,
+                : Colors.blueAccent,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -89,7 +93,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
               InkWell(
                 onTap: () {
                   ref.read(drawerVisibilityProvider.notifier).state = false;
-                  context.pop();
+                  context.replace('/detail/${item.slug}');
                 },
                 child: const Icon(Icons.arrow_back),
               ),
@@ -97,10 +101,12 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                 splashColor: Colors.white,
                 onTap: () {
                   if (prevChapter != null) {
-                    ref.read(navigationProvider.notifier).state =
-                        prevChapter.link;
+                    String alteredLink = prevChapter.link.contains('http')
+                        ? prevChapter.link
+                        : "$origin${prevChapter.link}";
+                    ref.read(navigationProvider.notifier).state = alteredLink;
                     ref.read(drawerVisibilityProvider.notifier).state = false;
-                    context.push('/content/${item.slug}');
+                    context.replace('/content/${item.slug}');
                   }
                 },
                 child: const Icon(Icons.keyboard_double_arrow_left_outlined),
@@ -108,10 +114,12 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
               InkWell(
                 onTap: () {
                   if (nextChapter != null) {
-                    ref.read(navigationProvider.notifier).state =
-                        nextChapter.link;
+                    String alteredLink = nextChapter.link.contains('http')
+                        ? nextChapter.link
+                        : "$origin${nextChapter.link}";
+                    ref.read(navigationProvider.notifier).state = alteredLink;
                     ref.read(drawerVisibilityProvider.notifier).state = false;
-                    context.push('/content/${item.slug}');
+                    context.replace('/content/${item.slug}');
                   }
                 },
                 child: const Icon(Icons.keyboard_double_arrow_right_outlined),
@@ -132,10 +140,13 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                   padding: const EdgeInsets.all(8),
                   child: Column(
                       children: detail.chapters.map((ch) {
+                    String alteredLink = ch.link.contains('http')
+                        ? ch.link
+                        : "$origin${ch.link}";
                     return Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                          color: ch.link == url
+                          color: alteredLink == url
                               ? currentTheme == ThemeMode.dark
                                   ? Colors.red
                                   : Colors.black
@@ -144,7 +155,8 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                               const BorderRadius.all(Radius.circular(6))),
                       child: InkWell(
                         onTap: () {
-                          ref.read(navigationProvider.notifier).state = ch.link;
+                          ref.read(navigationProvider.notifier).state =
+                              alteredLink;
                           ref.read(drawerVisibilityProvider.notifier).state =
                               false;
                           context.push('/content/${detail.slug}');
@@ -156,7 +168,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                               ch.chapter,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: ch.link == url
+                                color: alteredLink == url
                                     ? Colors.white
                                     : currentTheme == ThemeMode.dark
                                         ? Colors.white
@@ -164,7 +176,14 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded)
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: alteredLink == url
+                                  ? Colors.white
+                                  : currentTheme == ThemeMode.dark
+                                      ? Colors.white
+                                      : Colors.black,
+                            )
                           ],
                         ),
                       ),
@@ -209,29 +228,51 @@ class ContentScreen extends ConsumerWidget {
     return Scaffold(
         appBar: MainAppDetailBar(
             title: mangaDetail.asData?.value.chapters
-                .where((item) =>
-                    (item.link.contains('http')
-                        ? item.link
-                        : "$origin${item.link}") ==
-                    mangaUrl)
+                .where((item) {
+                  String altered = (item.link.contains('http')
+                      ? item.link
+                      : "$origin${item.link}");
+                  return altered == mangaUrl;
+                })
                 .first
                 .chapter),
         resizeToAvoidBottomInset: true,
         bottomSheet: bottomDrawer(context, ref, mangaContent.asData?.value,
             mangaUrl, isDrawerVisible),
-        body: mangaContent.whenOrNull(
+        body: mangaContent.when(
+          skipLoadingOnRefresh: false,
           loading: () => const Center(child: Text('Please Wait ...')),
-          error: (error, stackTrace) => Center(child: Text('Error: $error')),
-          data: (detail) {
-            return SingleChildScrollView(
+          error: (error, stackTrace) => Center(
               child: Column(
-                children: detail.images.map((item) {
-                  return MangaImage(
-                      image_url: item.image_url,
-                      onTap: () {
-                        showListChapter();
-                      });
-                }).toList(),
+            children: [
+              Text('Error: $error'),
+              ElevatedButton.icon(
+                  onPressed: () {
+                    return ref.refresh(mangaContentProvider(
+                        MangaParams(slug: slug!, url: mangaUrl)));
+                  },
+                  label: const Text('Reload'))
+            ],
+          )),
+          data: (detail) {
+            return RefreshIndicator(
+              triggerMode: RefreshIndicatorTriggerMode.anywhere,
+              onRefresh: () async {
+                // Step 3: Refetch data
+                return ref.refresh(mangaContentProvider(
+                    MangaParams(slug: slug!, url: mangaUrl)));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: detail.images.map((item) {
+                    return MangaImage(
+                        image_url: item.image_url,
+                        onTap: () {
+                          showListChapter();
+                        });
+                  }).toList(),
+                ),
               ),
             );
           },

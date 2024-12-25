@@ -6,6 +6,8 @@ class DesignSystem {
   static const double spacingSmall = 8.0;
   static const double spacingMedium = 16.0;
   static const double spacingLarge = 32.0;
+  static final skeletonGradient = (Color color_1, Color color_2) =>
+      LinearGradient(colors: [color_1, color_2]);
 }
 
 class TextStyles {
