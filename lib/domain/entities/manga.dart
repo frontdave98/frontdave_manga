@@ -3,6 +3,14 @@ class ChapterList {
   final String link;
   ChapterList({required this.chapter, required this.link});
 
+// Convert ChapterList to a Map (for JSON encoding)
+  Map<String, dynamic> toJson() {
+    return {
+      'link': link,
+      'chapter': chapter,
+    };
+  }
+
   factory ChapterList.fromJson(Map<String, dynamic> json) {
     return ChapterList(
       chapter: json['chapter'],
@@ -14,6 +22,13 @@ class ChapterList {
 class ChapterContent {
   final String image_url;
   ChapterContent({required this.image_url});
+
+  // Convert ChapterContent to a Map (for JSON encoding)
+  Map<String, dynamic> toJson() {
+    return {
+      'image_url': image_url,
+    };
+  }
 
   factory ChapterContent.fromJson(Map<String, dynamic> json) {
     return ChapterContent(

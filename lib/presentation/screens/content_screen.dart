@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontdave_manga/domain/entities/manga.dart';
+import 'package:frontdave_manga/presentation/providers/last_read_chapter_provider.dart';
 import 'package:frontdave_manga/presentation/providers/manga_provider.dart';
 import 'package:frontdave_manga/presentation/providers/providers.dart';
 import 'package:frontdave_manga/presentation/providers/theme_provider.dart';
@@ -9,6 +10,7 @@ import 'package:frontdave_manga/presentation/widgets/app_bar_detail.dart';
 import 'package:go_router/go_router.dart';
 
 final drawerVisibilityProvider = StateProvider<bool>((ref) => false);
+final targetIndexProvider = StateProvider<int?>((ref) => null);
 
 class MangaImage extends StatelessWidget {
   final String image_url;
@@ -40,21 +42,32 @@ class MangaImage extends StatelessWidget {
 Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
     String? url, bool isDrawerVisible) {
   final currentTheme = ref.watch(themeNotifierProvider);
+  final lastReadChapter = ref.watch(lastReadChapterProvider);
+  final notifier = ref.read(lastReadChapterProvider.notifier);
+
+  // Load the last read chapter for the manga
 
   if (item == null) {
     return const SizedBox(
       height: 0,
     );
   }
+  notifier.loadLastReadChapter(item.slug);
   final mangaDetail = ref.watch(mangaDetailProvider(item.slug));
 
   String? fullUrl = mangaDetail.asData?.value.url;
 
   // Parse the URL
-  Uri uri = Uri.parse(fullUrl!);
+  String origin = '';
+  if (fullUrl != null) {
+    Uri uri = Uri.parse(fullUrl);
+    // Extract the origin
+    origin = "${uri.scheme}://${uri.host}";
+  }
 
-  // Extract the origin
-  String origin = "${uri.scheme}://${uri.host}";
+  final ScrollController scrollController = ScrollController();
+// Check the condition when the state changes
+  // Listen to changes in the target index provider
 
   final currentChapterIndex = mangaDetail.asData?.value.chapters.indexWhere(
       (item) =>
@@ -69,10 +82,15 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
       ? mangaDetail.asData?.value.chapters[currentChapterIndex - 1]
       : null;
 
-  print("currentChapterIndex $currentChapterIndex");
-  print("prevChapter $prevChapter");
-  print("nextChapter $nextChapter");
-
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (currentChapterIndex != null) {
+      scrollController.animateTo(
+        currentChapterIndex * 40.0, // Assuming each item is 60.0 pixels high
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  });
   return AnimatedContainer(
     color: currentTheme == ThemeMode.dark ? Colors.black : Colors.white,
     duration: const Duration(milliseconds: 300),
@@ -99,26 +117,28 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
               ),
               InkWell(
                 splashColor: Colors.white,
-                onTap: () {
+                onTap: () async {
                   if (prevChapter != null) {
                     String alteredLink = prevChapter.link.contains('http')
                         ? prevChapter.link
                         : "$origin${prevChapter.link}";
                     ref.read(navigationProvider.notifier).state = alteredLink;
                     ref.read(drawerVisibilityProvider.notifier).state = false;
+                    await notifier.setLastReadChapter(item.slug, prevChapter);
                     context.replace('/content/${item.slug}');
                   }
                 },
                 child: const Icon(Icons.keyboard_double_arrow_left_outlined),
               ),
               InkWell(
-                onTap: () {
+                onTap: () async {
                   if (nextChapter != null) {
                     String alteredLink = nextChapter.link.contains('http')
                         ? nextChapter.link
                         : "$origin${nextChapter.link}";
                     ref.read(navigationProvider.notifier).state = alteredLink;
                     ref.read(drawerVisibilityProvider.notifier).state = false;
+                    await notifier.setLastReadChapter(item.slug, nextChapter);
                     context.replace('/content/${item.slug}');
                   }
                 },
@@ -137,6 +157,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
           child: mangaDetail.when(
               data: (detail) {
                 return SingleChildScrollView(
+                  controller: scrollController,
                   padding: const EdgeInsets.all(8),
                   child: Column(
                       children: detail.chapters.map((ch) {
@@ -154,11 +175,13 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                           borderRadius:
                               const BorderRadius.all(Radius.circular(6))),
                       child: InkWell(
-                        onTap: () {
+                        onTap: () async {
                           ref.read(navigationProvider.notifier).state =
                               alteredLink;
                           ref.read(drawerVisibilityProvider.notifier).state =
                               false;
+                          await notifier.setLastReadChapter(detail.slug, ch);
+
                           context.push('/content/${detail.slug}');
                         },
                         child: Row(
