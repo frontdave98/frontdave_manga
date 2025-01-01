@@ -6,17 +6,16 @@ import 'package:frontdave_manga/presentation/styles/design_system.dart';
 import 'package:frontdave_manga/presentation/widgets/app_bar.dart';
 import 'package:frontdave_manga/presentation/widgets/manga_card.dart';
 import 'package:frontdave_manga/presentation/widgets/skeleton_card.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
 final keywordProvider = StateProvider<String>((ref) => '');
 
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+class HiddenScreen extends ConsumerWidget {
+  const HiddenScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mangaState = ref.watch(mangaProvider);
+    final mangaState = ref.watch(hiddenMangaProvider);
     final currentTheme = ref.watch(themeNotifierProvider);
 
     // Watch the keyword from the StateProvider
@@ -93,10 +92,6 @@ class HomeScreen extends ConsumerWidget {
                   border: InputBorder.none),
               onChanged: (value) {
                 // Update the keyword
-                if (value == 'hidden') {
-                  ref.read(keywordProvider.notifier).state = '';
-                  context.push('/hidden');
-                }
                 ref.read(keywordProvider.notifier).state = value;
               },
             ),
@@ -139,14 +134,7 @@ class HomeScreen extends ConsumerWidget {
                     },
                   );
                 },
-                error: (error, stack) => Column(children: [
-                  Text('Error: $error'),
-                  ElevatedButton(
-                      onPressed: () {
-                        ref.refresh(mangaProvider);
-                      },
-                      child: const Text('Refresh'))
-                ]),
+                error: (error, stack) => Center(child: Text('Error: $error')),
               ),
             ),
           ],

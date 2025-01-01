@@ -24,6 +24,9 @@ final mangaRepositoryProvider = Provider(
 final fetchMangasUseCaseProvider = Provider(
   (ref) => FetchMangasUseCase(ref.read(mangaRepositoryProvider)),
 );
+final fetchHiddenMangasUseCaseProvider = Provider(
+  (ref) => FetchHiddenMangasUseCase(ref.read(mangaRepositoryProvider)),
+);
 final fetchMangaDetailUseCaseProvider = Provider(
   (ref) => FetchMangaDetailUseCase(ref.read(mangaRepositoryProvider)),
 );
@@ -34,7 +37,12 @@ final fetchMangaContentUseCaseProvider = Provider(
 // State notifier for fetching mangas
 final mangaProvider = FutureProvider((ref) async {
   final useCase = ref.read(fetchMangasUseCaseProvider);
-  return useCase();
+  return await useCase();
+});
+// State notifier for fetching mangas
+final hiddenMangaProvider = FutureProvider((ref) async {
+  final useCase = ref.read(fetchHiddenMangasUseCaseProvider);
+  return await useCase();
 });
 
 // State notifier for fetching mangas

@@ -83,13 +83,11 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
       : null;
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (currentChapterIndex != null) {
-      scrollController.animateTo(
-        currentChapterIndex * 40.0, // Assuming each item is 60.0 pixels high
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
+    scrollController.animateTo(
+      currentChapterIndex * 40.0, // Assuming each item is 60.0 pixels high
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
   });
   return AnimatedContainer(
     color: currentTheme == ThemeMode.dark ? Colors.black : Colors.white,

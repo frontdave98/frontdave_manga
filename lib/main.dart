@@ -3,18 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontdave_manga/presentation/providers/theme_provider.dart';
 import 'package:frontdave_manga/presentation/screens/content_screen.dart';
 import 'package:frontdave_manga/presentation/screens/detail_screen.dart';
+import 'package:frontdave_manga/presentation/screens/hidden_screen.dart';
 import 'package:frontdave_manga/presentation/screens/home_screen.dart';
 import 'package:frontdave_manga/presentation/styles/theme.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter _router = GoRouter(
   routes: [
-    // Home route
     GoRoute(
       path: '/',
       builder: (context, state) => const HomeScreen(),
     ),
-    // Detail route
+    GoRoute(
+      path: '/hidden',
+      builder: (context, state) => const HiddenScreen(),
+    ),
     GoRoute(
       path: '/detail/:slug',
       builder: (context, state) {

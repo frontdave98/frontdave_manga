@@ -8,8 +8,8 @@ class MangaRepositoryImpl implements MangaRepository {
   MangaRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<List<Manga>> fetchMangas() async {
-    return remoteDataSource.fetchMangas();
+  Future<List<Manga>> fetchMangas(bool? isHidden) async {
+    return remoteDataSource.fetchMangas(isHidden);
   }
 
   @override

@@ -7,7 +7,17 @@ class FetchMangasUseCase {
   FetchMangasUseCase(this.repository);
 
   Future<List<Manga>> call() async {
-    return repository.fetchMangas();
+    return repository.fetchMangas(false);
+  }
+}
+
+class FetchHiddenMangasUseCase {
+  final MangaRepository repository;
+
+  FetchHiddenMangasUseCase(this.repository);
+
+  Future<List<Manga>> call() async {
+    return repository.fetchMangas(true);
   }
 }
 

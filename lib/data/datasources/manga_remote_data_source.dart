@@ -6,8 +6,9 @@ class MangaRemoteDataSource {
 
   MangaRemoteDataSource(this.client);
 
-  Future<List<MangaModel>> fetchMangas() async {
-    final response = await client.get('/mangas?type=all');
+  Future<List<MangaModel>> fetchMangas(bool? isHidden) async {
+    final response =
+        await client.get('/mangas?type=${isHidden! ? 'hidden' : 'all'}');
     return (response.data['data'] as List)
         .map((json) => MangaModel.fromJson(json))
         .toList();

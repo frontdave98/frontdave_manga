@@ -89,7 +89,7 @@ class LastChapter extends ConsumerWidget {
         child: Center(
           child: Text(
             'Last Read: ${chapter.chapter}',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -212,7 +212,7 @@ class DetailScreen extends ConsumerWidget {
                                     const Icon(Icons.arrow_forward_ios)
                                   ]),
                             ));
-                      }).toList()
+                      })
                     ])),
                   ),
                 ],
