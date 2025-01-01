@@ -19,19 +19,22 @@ class MangaImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      panEnabled: true, // Enables panning
-      minScale: 1.0, // Minimum zoom scale
-      maxScale: 5.0, // Maximum zoom scale
-      child: InkWell(
-        onTap: () {
-          onTap();
-        },
-        child: CachedNetworkImage(
-          imageUrl: image_url,
-          width: double.infinity,
-          errorWidget: (context, url, error) => const SizedBox(
-            height: 0,
+    return Container(
+      width: double.infinity,
+      child: InteractiveViewer(
+        panEnabled: true, // Enables panning
+        minScale: 1.0, // Minimum zoom scale
+        maxScale: 5.0, // Maximum zoom scale
+        child: GestureDetector(
+          onTap: () {
+            onTap();
+          },
+          child: CachedNetworkImage(
+            imageUrl: image_url,
+            width: double.infinity,
+            errorWidget: (context, url, error) => const SizedBox(
+              height: 0,
+            ),
           ),
         ),
       ),
