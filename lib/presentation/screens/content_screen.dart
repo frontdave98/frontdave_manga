@@ -8,9 +8,11 @@ import 'package:frontdave_manga/presentation/providers/providers.dart';
 import 'package:frontdave_manga/presentation/providers/theme_provider.dart';
 import 'package:frontdave_manga/presentation/widgets/app_bar_detail.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 
 final drawerVisibilityProvider = StateProvider<bool>((ref) => false);
 final targetIndexProvider = StateProvider<int?>((ref) => null);
+final scrollProgressProvider = StateProvider<double>((ref) => 0.0);
 
 class MangaImage extends StatelessWidget {
   final String image_url;
@@ -19,7 +21,7 @@ class MangaImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: InteractiveViewer(
         panEnabled: true, // Enables panning
@@ -43,7 +45,7 @@ class MangaImage extends StatelessWidget {
 }
 
 Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
-    String? url, bool isDrawerVisible) {
+    String? url, bool isDrawerVisible, Widget slider) {
   final currentTheme = ref.watch(themeNotifierProvider);
   final lastReadChapter = ref.watch(lastReadChapterProvider);
   final notifier = ref.read(lastReadChapterProvider.notifier);
@@ -88,7 +90,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
   WidgetsBinding.instance.addPostFrameCallback((_) {
     scrollController.animateTo(
       currentChapterIndex * 40.0, // Assuming each item is 60.0 pixels high
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
       curve: Curves.easeInOut,
     );
   });
@@ -99,6 +101,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
     height: isDrawerVisible ? 350 : 0,
     child: Column(
       children: [
+        slider,
         Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
@@ -157,18 +160,13 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
         Expanded(
           child: mangaDetail.when(
               data: (detail) {
-                return SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                      children: detail.chapters.map((ch) {
-                    String alteredLink = ch.link.contains('http')
-                        ? ch.link
-                        : "$origin${ch.link}";
+                return ListView.builder(
+                  itemCount: detail.chapters.length,
+                  itemBuilder: (context, index) {
                     return Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                          color: alteredLink == url
+                          color: detail.chapters[index].link == url
                               ? currentTheme == ThemeMode.dark
                                   ? Colors.red
                                   : Colors.black
@@ -177,22 +175,27 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                               const BorderRadius.all(Radius.circular(6))),
                       child: InkWell(
                         onTap: () async {
+                          String alteredLink =
+                              detail.chapters[index].link.contains('http')
+                                  ? detail.chapters[index].link
+                                  : "$origin${detail.chapters[index].link}";
                           ref.read(navigationProvider.notifier).state =
                               alteredLink;
                           ref.read(drawerVisibilityProvider.notifier).state =
                               false;
-                          await notifier.setLastReadChapter(detail.slug, ch);
+                          await notifier.setLastReadChapter(
+                              detail.slug, detail.chapters[index]);
 
-                          context.push('/content/${detail.slug}');
+                          context.replace('/content/${detail.slug}');
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              ch.chapter,
+                              detail.chapters[index].chapter,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: alteredLink == url
+                                color: detail.chapters[index].link == url
                                     ? Colors.white
                                     : currentTheme == ThemeMode.dark
                                         ? Colors.white
@@ -202,7 +205,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                             ),
                             Icon(
                               Icons.chevron_right_rounded,
-                              color: alteredLink == url
+                              color: detail.chapters[index].link == url
                                   ? Colors.white
                                   : currentTheme == ThemeMode.dark
                                       ? Colors.white
@@ -212,7 +215,9 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                         ),
                       ),
                     );
-                  }).toList()),
+                  },
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(8),
                 );
               },
               loading: () => const SizedBox(height: 0),
@@ -224,18 +229,52 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
   );
 }
 
-class ContentScreen extends ConsumerWidget {
+class ContentScreen extends ConsumerStatefulWidget {
   final String? slug;
   const ContentScreen({super.key, required this.slug});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _ContentScreenState createState() => _ContentScreenState();
+}
+
+class _ContentScreenState extends ConsumerState<ContentScreen> {
+  final ScrollController _scrollController = ScrollController();
+  Timer? _throttleTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_throttleUpdateScrollProgress);
+  }
+
+  void _throttleUpdateScrollProgress() {
+    if (_throttleTimer?.isActive ?? false) return;
+
+    _throttleTimer = Timer(const Duration(milliseconds: 1000), () {
+      ref.read(scrollProgressProvider.notifier).state =
+          _scrollController.position.pixels /
+              _scrollController.position.maxScrollExtent;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_throttleUpdateScrollProgress);
+    _scrollController.dispose();
+    _throttleTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mangaUrl = ref.watch(navigationProvider);
     final isDrawerVisible = ref.watch(drawerVisibilityProvider);
+    final scrollProgress = ref.watch(scrollProgressProvider);
+    final currentTheme = ref.watch(themeNotifierProvider);
 
-    final mangaContent = ref
-        .watch(mangaContentProvider(MangaParams(slug: slug!, url: mangaUrl!)));
-    final mangaDetail = ref.watch(mangaDetailProvider(slug!));
+    final mangaContent = ref.watch(
+        mangaContentProvider(MangaParams(slug: widget.slug!, url: mangaUrl!)));
+    final mangaDetail = ref.watch(mangaDetailProvider(widget.slug!));
 
     void showListChapter() {
       ref.read(drawerVisibilityProvider.notifier).state = !isDrawerVisible;
@@ -261,8 +300,26 @@ class ContentScreen extends ConsumerWidget {
                 .first
                 .chapter),
         resizeToAvoidBottomInset: true,
-        bottomSheet: bottomDrawer(context, ref, mangaContent.asData?.value,
-            mangaUrl, isDrawerVisible),
+        bottomSheet: bottomDrawer(
+          context,
+          ref,
+          mangaContent.asData?.value,
+          mangaUrl,
+          isDrawerVisible,
+          Slider(
+            value: scrollProgress,
+            thumbColor:
+                currentTheme == ThemeMode.light ? Colors.blue : Colors.red,
+            activeColor:
+                currentTheme == ThemeMode.light ? Colors.blue : Colors.red,
+            onChanged: (value) {
+              final position =
+                  value * _scrollController.position.maxScrollExtent;
+              _scrollController.jumpTo(position);
+              ref.read(scrollProgressProvider.notifier).state = value;
+            },
+          ),
+        ),
         body: mangaContent.when(
           skipLoadingOnRefresh: false,
           loading: () => const Center(child: Text('Please Wait ...')),
@@ -273,8 +330,9 @@ class ContentScreen extends ConsumerWidget {
               ElevatedButton.icon(
                   onPressed: () {
                     return ref.refresh(mangaContentProvider(
-                        MangaParams(slug: slug!, url: mangaUrl)));
+                        MangaParams(slug: widget.slug!, url: mangaUrl)));
                   },
+                  icon: const Icon(Icons.refresh),
                   label: const Text('Reload'))
             ],
           )),
@@ -282,21 +340,33 @@ class ContentScreen extends ConsumerWidget {
             return RefreshIndicator(
               triggerMode: RefreshIndicatorTriggerMode.anywhere,
               onRefresh: () async {
-                // Step 3: Refetch data
                 return ref.refresh(mangaContentProvider(
-                    MangaParams(slug: slug!, url: mangaUrl)));
+                    MangaParams(slug: widget.slug!, url: mangaUrl)));
               },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: detail.images.map((item) {
-                    return MangaImage(
-                        image_url: item.image_url,
-                        onTap: () {
-                          showListChapter();
-                        });
-                  }).toList(),
-                ),
+              child: Column(
+                children: [
+                  LinearProgressIndicator(
+                    value: scrollProgress,
+                    backgroundColor: Colors.grey[200],
+                    color: currentTheme == ThemeMode.light
+                        ? const Color.fromARGB(255, 230, 239, 246)
+                        : Colors.red,
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      controller: _scrollController,
+                      itemCount: detail.images.length,
+                      itemBuilder: (context, index) {
+                        return MangaImage(
+                            image_url: detail.images[index].image_url,
+                            onTap: () {
+                              showListChapter();
+                            });
+                      },
+                    ),
+                  ),
+                ],
               ),
             );
           },

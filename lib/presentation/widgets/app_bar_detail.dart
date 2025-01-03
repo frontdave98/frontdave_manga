@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 import 'package:frontdave_manga/presentation/providers/theme_provider.dart';
+import 'package:frontdave_manga/presentation/styles/design_system.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MainAppDetailBar extends ConsumerWidget implements PreferredSizeWidget {
   final String? title;
@@ -18,14 +20,37 @@ class MainAppDetailBar extends ConsumerWidget implements PreferredSizeWidget {
     return PreferredSize(
       preferredSize: const Size.fromHeight(100),
       child: AppBar(
-        title: Text(
-          title != null ? title! : '',
-          style: TextStyle(
-              color:
-                  currentTheme == ThemeMode.dark ? Colors.white : Colors.black,
-              fontSize: 14,
-              fontWeight: FontWeight.w900),
-        ),
+        title: title != null
+            ? Text(
+                title!,
+                style: TextStyle(
+                    color: currentTheme == ThemeMode.dark
+                        ? Colors.white
+                        : Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900),
+              )
+            : Shimmer(
+                enabled: true,
+                loop: 10,
+                gradient: DesignSystem.skeletonGradient(
+                    currentTheme == ThemeMode.light
+                        ? Colors.grey[300]!
+                        : Colors.grey[900]!,
+                    currentTheme == ThemeMode.light
+                        ? Colors.grey[300]!
+                        : Colors.grey[900]!),
+                child: Container(
+                    height: 16,
+                    width: 100,
+                    clipBehavior: Clip.hardEdge,
+                    decoration: BoxDecoration(
+                      color: currentTheme == ThemeMode.light
+                          ? Colors.grey[300]
+                          : Colors.grey[900],
+                      borderRadius: BorderRadius.circular(8.0),
+                    )),
+              ),
         centerTitle: true,
         backgroundColor:
             currentTheme == ThemeMode.dark ? Colors.black : Colors.white,

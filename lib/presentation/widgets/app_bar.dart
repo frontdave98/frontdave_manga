@@ -11,37 +11,40 @@ class MainAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(themeNotifierProvider); // Wate.
+    final currentTheme =
+        ref.watch(themeNotifierProvider); // Watch the theme mode.
     final themeNotifier = ref.read(
-        themeNotifierProvider.notifier); // Access notifier.ch the theme mode.
+        themeNotifierProvider.notifier); // Access the theme mode notifier.
 
-    return PreferredSize(
-        preferredSize: const Size.fromHeight(120),
-        child: SizedBox(
-          height: 120,
-          child: AppBar(
-            centerTitle: true,
-            scrolledUnderElevation: 0,
-            title: Image.asset(
-              'lib/assets/app_icon.png',
-              height: 25,
-            ),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  themeNotifier.setThemeMode(currentTheme == ThemeMode.dark
-                      ? ThemeMode.light
-                      : ThemeMode.dark);
-                }, // Toggle theme on click.
-                icon: SizedBox(
-                    child: AnimatedSwitcher(
-                        duration: const Duration(seconds: 1),
-                        child: Icon(currentTheme == ThemeMode.light
-                            ? Icons.dark_mode
-                            : Icons.light_mode))),
-              ),
-            ],
+    return SizedBox(
+      height: 100,
+      child: AppBar(
+          backgroundColor:
+              currentTheme == ThemeMode.light ? Colors.white : Colors.black,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: true,
+          title: Image.asset(
+            'lib/assets/app_icon.png',
+            height: 25,
           ),
-        ));
+          actions: [
+            IconButton(
+              onPressed: () {
+                themeNotifier.setThemeMode(currentTheme == ThemeMode.dark
+                    ? ThemeMode.light
+                    : ThemeMode.dark);
+              }, // Toggle theme on click.
+              icon: SizedBox(
+                  child: AnimatedSwitcher(
+                      duration: const Duration(seconds: 1),
+                      child: Icon(
+                        currentTheme == ThemeMode.light
+                            ? Icons.dark_mode
+                            : Icons.light_mode,
+                        size: 24,
+                      ))),
+            ),
+          ]),
+    );
   }
 }

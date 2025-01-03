@@ -19,6 +19,7 @@ class SkeletonCard extends ConsumerWidget {
               ? Colors.grey[300]!
               : Colors.grey[900]!),
       child: Container(
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           color: currentTheme == ThemeMode.light
               ? Colors.grey[300]
@@ -29,7 +30,7 @@ class SkeletonCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 100,
+              height: 50,
               decoration: BoxDecoration(
                 color: Colors.grey[400],
                 borderRadius: BorderRadius.circular(8.0),

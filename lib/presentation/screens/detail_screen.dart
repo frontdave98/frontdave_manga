@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -8,44 +9,265 @@ import 'package:frontdave_manga/presentation/providers/last_read_chapter_provide
 import 'package:frontdave_manga/presentation/providers/manga_provider.dart';
 import 'package:frontdave_manga/presentation/providers/providers.dart';
 import 'package:frontdave_manga/presentation/providers/theme_provider.dart';
+import 'package:frontdave_manga/presentation/styles/design_system.dart';
 import 'package:frontdave_manga/presentation/widgets/app_bar_detail.dart';
 import 'package:frontdave_manga/presentation/widgets/tab_bar.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
-class HeroImage extends StatelessWidget {
+class ContentSkeleton extends ConsumerWidget {
+  const ContentSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(themeNotifierProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          color: currentTheme == ThemeMode.light ? Colors.white : Colors.black,
+          height: 50,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(2, (index) {
+              return Shimmer(
+                gradient: DesignSystem.skeletonGradient(
+                    currentTheme == ThemeMode.light
+                        ? Colors.grey[300]!
+                        : Colors.grey[900]!,
+                    currentTheme == ThemeMode.light
+                        ? Colors.grey[500]!
+                        : Colors.grey[900]!),
+                child: Container(
+                  height: 17,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: currentTheme == ThemeMode.light
+                        ? Colors.grey[300]
+                        : Colors.grey[900],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        SizedBox(
+          height: 300,
+          child: Stack(
+            children: [
+              Shimmer(
+                gradient: DesignSystem.skeletonGradient(
+                    currentTheme == ThemeMode.light
+                        ? Colors.grey[300]!
+                        : Colors.grey[900]!,
+                    currentTheme == ThemeMode.light
+                        ? Colors.grey[300]!
+                        : Colors.grey[900]!),
+                child: Container(
+                  height: 250,
+                  decoration: BoxDecoration(
+                    color: currentTheme == ThemeMode.light
+                        ? Colors.grey[300]
+                        : Colors.grey[900],
+                  ),
+                ),
+              ),
+              Positioned(
+                  child: Shimmer(
+                gradient: DesignSystem.skeletonGradient(
+                    currentTheme == ThemeMode.light
+                        ? Colors.blueGrey[300]!
+                        : Colors.blueGrey[900]!,
+                    currentTheme == ThemeMode.light
+                        ? Colors.blueGrey[300]!
+                        : Colors.blueGrey[900]!),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 50),
+                    width: 150,
+                    height: 220,
+                    decoration: BoxDecoration(
+                      color: currentTheme == ThemeMode.light
+                          ? Colors.blueGrey[300]
+                          : Colors.blueGrey[900],
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+              ))
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Shimmer(
+            gradient: DesignSystem.skeletonGradient(
+                currentTheme == ThemeMode.light
+                    ? Colors.grey[300]!
+                    : Colors.grey[900]!,
+                currentTheme == ThemeMode.light
+                    ? Colors.grey[500]!
+                    : Colors.grey[900]!),
+            child: Container(
+              height: 17,
+              width: 140,
+              decoration: BoxDecoration(
+                color: currentTheme == ThemeMode.light
+                    ? Colors.grey[300]
+                    : Colors.grey[900],
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Shimmer(
+                  gradient: DesignSystem.skeletonGradient(
+                      currentTheme == ThemeMode.light
+                          ? Colors.grey[300]!
+                          : Colors.grey[900]!,
+                      currentTheme == ThemeMode.light
+                          ? Colors.grey[500]!
+                          : Colors.grey[900]!),
+                  child: Container(
+                    height: 32,
+                    width: 180,
+                    decoration: BoxDecoration(
+                      color: currentTheme == ThemeMode.light
+                          ? Colors.grey[300]
+                          : Colors.grey[900],
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...List.generate(3, (index) {
+                  return Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Shimmer(
+                        gradient: DesignSystem.skeletonGradient(
+                            currentTheme == ThemeMode.light
+                                ? Colors.grey[300]!
+                                : Colors.grey[900]!,
+                            currentTheme == ThemeMode.light
+                                ? Colors.grey[500]!
+                                : Colors.grey[900]!),
+                        child: Container(
+                          height: 16,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: currentTheme == ThemeMode.light
+                                ? Colors.grey[300]
+                                : Colors.grey[900],
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                })
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class HeroImage extends ConsumerWidget {
   final String featured_image;
   final ThemeMode theme;
   const HeroImage(
       {super.key, required this.featured_image, required this.theme});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 550,
-      width: double.infinity,
-      decoration: BoxDecoration(
-          color: theme == ThemeMode.light ? Colors.blue : Colors.redAccent,
-          border: Border.all(
-              width: 8,
-              color: theme == ThemeMode.light ? Colors.blue : Colors.redAccent),
-          borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16))),
-      child: Hero(
-        tag: featured_image,
-        child: Container(
-          clipBehavior: Clip.hardEdge,
-          decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(16))),
-          child: CachedNetworkImage(
-            imageUrl: featured_image,
-            fit: BoxFit.cover,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(themeNotifierProvider);
+    return SizedBox(
+      height: 300,
+      child: Stack(
+        children: [
+          Container(
+            height: 220,
+            clipBehavior: Clip.hardEdge,
             width: double.infinity,
-            errorWidget: (context, url, error) => const SizedBox(
-              height: 0,
+            decoration: BoxDecoration(
+                color: currentTheme == ThemeMode.light
+                    ? Colors.white
+                    : Colors.black,
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(16))),
+            child: ShaderMask(
+              shaderCallback: (rect) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.5),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 1.0],
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstIn,
+              child: ImageFiltered(
+                enabled: true,
+                imageFilter: ImageFilter.blur(
+                    sigmaX: 5, sigmaY: 5, tileMode: TileMode.repeated),
+                child: CachedNetworkImage(
+                  imageUrl: featured_image,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorWidget: (context, url, error) => const SizedBox(
+                    height: 0,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          Positioned(
+            child: Align(
+              alignment: Alignment.center,
+              child: Container(
+                margin: const EdgeInsets.only(top: 24),
+                width: 150,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(boxShadow: [
+                  BoxShadow(
+                    color: currentTheme == ThemeMode.light
+                        ? Colors.blue.withOpacity(0.6)
+                        : Colors.redAccent.withOpacity(0.6), // Shadow color
+                    spreadRadius: 5, // How wide the shadow spreads
+                    blurRadius: 10, // How soft the shadow appears
+                    offset: const Offset(0, 4), // Position of the shadow (x, y)
+                  ),
+                ], borderRadius: const BorderRadius.all(Radius.circular(16))),
+                child: Hero(
+                  tag: featured_image,
+                  child: CachedNetworkImage(
+                    imageUrl: featured_image,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorWidget: (context, url, error) => const SizedBox(
+                      height: 0,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -54,8 +276,12 @@ class HeroImage extends StatelessWidget {
 class LastChapter extends ConsumerWidget {
   final Manga detail;
   final String lastChapterDetail;
+  final bool isDetail;
   const LastChapter(
-      {super.key, required this.lastChapterDetail, required this.detail});
+      {super.key,
+      required this.lastChapterDetail,
+      required this.detail,
+      required this.isDetail});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,15 +308,26 @@ class LastChapter extends ConsumerWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(8.0),
-        color: currentTheme == ThemeMode.light
-            ? Colors.blue.withOpacity(0.6)
-            : Colors.redAccent.withOpacity(0.6),
-        child: Center(
-          child: Text(
-            'Last Read: ${chapter.chapter}',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
+        padding: EdgeInsets.all(isDetail ? 16 : 8.0),
+        decoration: BoxDecoration(
+            color: currentTheme == ThemeMode.light
+                ? Colors.blue.withOpacity(isDetail ? 0.6 : 1)
+                : Colors.redAccent.withOpacity(isDetail ? 0.6 : 1),
+            borderRadius: BorderRadius.all(Radius.circular(isDetail ? 16 : 0))),
+        child: Row(
+          mainAxisAlignment: isDetail
+              ? MainAxisAlignment.spaceBetween
+              : MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Last Read: ',
+              style: TextStyle(fontSize: 14),
+            ),
+            Text(
+              chapter.chapter,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
     );
@@ -115,7 +352,8 @@ class DetailScreen extends ConsumerWidget {
     return Scaffold(
         appBar: MainAppDetailBar(title: mangaDetail.asData?.value.title),
         body: mangaDetail.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            skipLoadingOnRefresh: false,
+            loading: () => const ContentSkeleton(),
             error: (error, stackTrace) => Center(child: Text('Error: $error')),
             data: (detail) {
               return Tabs(
@@ -142,6 +380,27 @@ class DetailScreen extends ConsumerWidget {
                             theme: currentTheme,
                             featured_image: detail.featured_image,
                           ),
+                          Padding(
+                              padding: const EdgeInsets.all(0),
+                              child: SizedBox(
+                                  child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${detail.chapters.length.toString()} Chapter Scrapped ",
+                                    style: TextStyle(
+                                        color: currentTheme == ThemeMode.light
+                                            ? Colors.blueAccent
+                                            : Colors.redAccent,
+                                        fontWeight: FontWeight.w800),
+                                  ),
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 16,
+                                  )
+                                ],
+                              ))),
                           const SizedBox(
                             height: 8,
                           ),
@@ -161,6 +420,14 @@ class DetailScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
+                          if (lastReadChapter != null)
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: LastChapter(
+                                  lastChapterDetail: lastReadChapter,
+                                  detail: detail,
+                                  isDetail: true),
+                            )
                         ],
                       ),
                     ),
@@ -170,50 +437,70 @@ class DetailScreen extends ConsumerWidget {
                       // Step 3: Refetch data
                       return ref.refresh(mangaDetailProvider(slug!));
                     },
-                    child: SingleChildScrollView(
-                        child: Column(children: [
-                      if (lastReadChapter != null)
-                        LastChapter(
-                          detail: detail,
-                          lastChapterDetail: lastReadChapter,
-                        ),
-                      ...detail.chapters.map((ch) {
-                        return InkWell(
-                            onTap: () async {
-                              await notifier.setLastReadChapter(slug!, ch);
+                    child: Column(
+                      children: [
+                        if (lastReadChapter != null)
+                          LastChapter(
+                            detail: detail,
+                            lastChapterDetail: lastReadChapter,
+                            isDetail: false,
+                          ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: detail.chapters.length,
+                            itemBuilder: (context, index) {
+                              final ch = detail.chapters[index];
+                              return InkWell(
+                                splashColor: Colors.red,
+                                onTap: () async {
+                                  await notifier.setLastReadChapter(slug!, ch);
 
-                              String fullUrl = detail.url;
+                                  String fullUrl = detail.url;
 
-                              // Parse the URL
-                              Uri uri = Uri.parse(fullUrl);
+                                  // Parse the URL
+                                  Uri uri = Uri.parse(fullUrl);
 
-                              // Extract the origin
-                              String origin = "${uri.scheme}://${uri.host}";
-                              ref.read(navigationProvider.notifier).state =
-                                  ch.link.contains('http')
-                                      ? ch.link
-                                      : "$origin${ch.link}";
-                              context.push('/content/${detail.slug}');
-                            },
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                  border:
-                                      Border(bottom: BorderSide(width: 0.3))),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 16),
-                              child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(ch.chapter,
+                                  // Extract the origin
+                                  String origin = "${uri.scheme}://${uri.host}";
+                                  ref.read(navigationProvider.notifier).state =
+                                      ch.link.contains('http')
+                                          ? ch.link
+                                          : "$origin${ch.link}";
+                                  context.push('/content/${detail.slug}');
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: currentTheme == ThemeMode.light
+                                        ? Colors.white
+                                        : Colors.black,
+                                    border: const Border(
+                                        bottom: BorderSide(width: 0.3)),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 14),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        ch.chapter,
                                         style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800)),
-                                    const Icon(Icons.arrow_forward_ios)
-                                  ]),
-                            ));
-                      })
-                    ])),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ],
                 tabBarColor: currentTheme == ThemeMode.light
