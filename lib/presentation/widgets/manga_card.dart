@@ -69,7 +69,7 @@ class _MangaCardState extends ConsumerState<MangaCard>
             child: Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  width: 3,
+                  width: 6,
                   color: currentTheme == ThemeMode.light
                       ? Colors.blueAccent
                       : Colors.red,
@@ -86,7 +86,7 @@ class _MangaCardState extends ConsumerState<MangaCard>
                   context.push('/detail/${widget.item.slug}');
                 },
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       clipBehavior: Clip.hardEdge,
@@ -114,7 +114,8 @@ class _MangaCardState extends ConsumerState<MangaCard>
                     ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

@@ -242,6 +242,7 @@ class HeroImage extends ConsumerWidget {
               child: Container(
                 margin: const EdgeInsets.only(top: 24),
                 width: 150,
+                height: 220,
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(boxShadow: [
                   BoxShadow(
@@ -319,13 +320,17 @@ class LastChapter extends ConsumerWidget {
               ? MainAxisAlignment.spaceBetween
               : MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Last Read: ',
-              style: TextStyle(fontSize: 14),
+              style: TextStyle(
+                  fontSize: 14, color: isDetail ? null : Colors.white),
             ),
             Text(
               chapter.chapter,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isDetail ? null : Colors.white),
             ),
           ],
         ),

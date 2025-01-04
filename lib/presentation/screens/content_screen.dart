@@ -21,7 +21,8 @@ class MangaImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 500),
       width: double.infinity,
       child: InteractiveViewer(
         panEnabled: true, // Enables panning
@@ -34,9 +35,7 @@ class MangaImage extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: image_url,
             width: double.infinity,
-            errorWidget: (context, url, error) => const SizedBox(
-              height: 0,
-            ),
+            fit: BoxFit.contain,
           ),
         ),
       ),
@@ -47,7 +46,6 @@ class MangaImage extends StatelessWidget {
 Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
     String? url, bool isDrawerVisible, Widget slider) {
   final currentTheme = ref.watch(themeNotifierProvider);
-  final lastReadChapter = ref.watch(lastReadChapterProvider);
   final notifier = ref.read(lastReadChapterProvider.notifier);
 
   // Load the last read chapter for the manga
@@ -90,7 +88,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
   WidgetsBinding.instance.addPostFrameCallback((_) {
     scrollController.animateTo(
       currentChapterIndex * 40.0, // Assuming each item is 60.0 pixels high
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 100),
       curve: Curves.easeInOut,
     );
   });
@@ -163,22 +161,22 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                 return ListView.builder(
                   itemCount: detail.chapters.length,
                   itemBuilder: (context, index) {
+                    String alteredLink =
+                        detail.chapters[index].link.contains('http')
+                            ? detail.chapters[index].link
+                            : "$origin${detail.chapters[index].link}";
                     return Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                          color: detail.chapters[index].link == url
+                          color: alteredLink == url
                               ? currentTheme == ThemeMode.dark
-                                  ? Colors.red
-                                  : Colors.black
+                                  ? const Color.fromARGB(60, 244, 67, 54)
+                                  : const Color.fromARGB(107, 0, 90, 234)
                               : Colors.transparent,
                           borderRadius:
                               const BorderRadius.all(Radius.circular(6))),
                       child: InkWell(
                         onTap: () async {
-                          String alteredLink =
-                              detail.chapters[index].link.contains('http')
-                                  ? detail.chapters[index].link
-                                  : "$origin${detail.chapters[index].link}";
                           ref.read(navigationProvider.notifier).state =
                               alteredLink;
                           ref.read(drawerVisibilityProvider.notifier).state =
@@ -195,7 +193,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                               detail.chapters[index].chapter,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: detail.chapters[index].link == url
+                                color: alteredLink == url
                                     ? Colors.white
                                     : currentTheme == ThemeMode.dark
                                         ? Colors.white
@@ -205,7 +203,7 @@ Widget bottomDrawer(BuildContext context, WidgetRef ref, Manga? item,
                             ),
                             Icon(
                               Icons.chevron_right_rounded,
-                              color: detail.chapters[index].link == url
+                              color: alteredLink == url
                                   ? Colors.white
                                   : currentTheme == ThemeMode.dark
                                       ? Colors.white
@@ -251,9 +249,10 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
     if (_throttleTimer?.isActive ?? false) return;
 
     _throttleTimer = Timer(const Duration(milliseconds: 1000), () {
+      final progress = _scrollController.position.pixels /
+          _scrollController.position.maxScrollExtent;
       ref.read(scrollProgressProvider.notifier).state =
-          _scrollController.position.pixels /
-              _scrollController.position.maxScrollExtent;
+          progress.clamp(0.0, 1.0);
     });
   }
 
@@ -307,7 +306,7 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
           mangaUrl,
           isDrawerVisible,
           Slider(
-            value: scrollProgress,
+            value: scrollProgress.clamp(0.0, 1.0),
             thumbColor:
                 currentTheme == ThemeMode.light ? Colors.blue : Colors.red,
             activeColor:
@@ -320,56 +319,60 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
             },
           ),
         ),
-        body: mangaContent.when(
-          skipLoadingOnRefresh: false,
-          loading: () => const Center(child: Text('Please Wait ...')),
-          error: (error, stackTrace) => Center(
-              child: Column(
-            children: [
-              Text('Error: $error'),
-              ElevatedButton.icon(
-                  onPressed: () {
-                    return ref.refresh(mangaContentProvider(
-                        MangaParams(slug: widget.slug!, url: mangaUrl)));
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reload'))
-            ],
-          )),
-          data: (detail) {
-            return RefreshIndicator(
-              triggerMode: RefreshIndicatorTriggerMode.anywhere,
-              onRefresh: () async {
-                return ref.refresh(mangaContentProvider(
-                    MangaParams(slug: widget.slug!, url: mangaUrl)));
-              },
-              child: Column(
-                children: [
-                  LinearProgressIndicator(
-                    value: scrollProgress,
-                    backgroundColor: Colors.grey[200],
-                    color: currentTheme == ThemeMode.light
-                        ? const Color.fromARGB(255, 230, 239, 246)
-                        : Colors.red,
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      controller: _scrollController,
-                      itemCount: detail.images.length,
-                      itemBuilder: (context, index) {
-                        return MangaImage(
-                            image_url: detail.images[index].image_url,
-                            onTap: () {
-                              showListChapter();
-                            });
-                      },
+        body: SafeArea(
+          child: mangaContent.when(
+            skipLoadingOnRefresh: false,
+            loading: () => const Center(child: Text('Please Wait ...')),
+            error: (error, stackTrace) => Center(
+                child: Column(
+              children: [
+                Text('Error: $error'),
+                ElevatedButton.icon(
+                    onPressed: () {
+                      return ref.refresh(mangaContentProvider(
+                          MangaParams(slug: widget.slug!, url: mangaUrl)));
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reload'))
+              ],
+            )),
+            data: (detail) {
+              return RefreshIndicator(
+                onRefresh: () async {
+                  return ref.refresh(mangaContentProvider(
+                      MangaParams(slug: widget.slug!, url: mangaUrl)));
+                },
+                child: Column(
+                  children: [
+                    LinearProgressIndicator(
+                      value: scrollProgress.clamp(0.0, 1.0),
+                      backgroundColor: Colors.grey[200],
+                      color: currentTheme == ThemeMode.light
+                          ? const Color.fromARGB(255, 41, 144, 223)
+                          : const Color.fromARGB(255, 95, 23, 18),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: Column(
+                          children:
+                              List.generate(detail.images.length, (index) {
+                            final item = detail.images[index];
+                            return MangaImage(
+                              image_url: item.image_url,
+                              onTap: () {
+                                showListChapter();
+                              },
+                            );
+                          }),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              );
+            },
+          ),
         ));
   }
 }
